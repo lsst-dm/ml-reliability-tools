@@ -17,6 +17,8 @@ from pathlib import Path
 @click.option("--where", default="", help="Data query to apply.")
 @click.option("--output", "-o", default="./", help="Output location.")
 @click.option("--njobs", "-j", default=1, help="Number of jobs to use.")
+@click.option("--injected/--not-injected",  default=True, 
+    help="Use source-injected data products or not")
 @click.option(
     "--limit",
     default=None,
@@ -30,6 +32,7 @@ def make_drp_cutouts(
     output="./",
     limit: int | None = None,
     njobs: int = 1,
+    injected: bool = False
 ):
     """Make image subtraction cutouts from a DRP run and output metadata for s3 upload."""
     butler = dafButler.Butler(repo, collections=collections)
@@ -37,8 +40,12 @@ def make_drp_cutouts(
     cutoutConfigDrp = PlotImageSubtractionCutoutsConfig()
     cutoutConfigDrp.sizes = [51]
     cutoutConfigDrp.add_metadata = False
-    cutoutConfigDrp.science_image_type = "injected_pvi"
-    cutoutConfigDrp.diff_image_type = "injected_goodSeeingDiff"
+    if injected:
+        cutoutConfigDrp.science_image_type = "injected_pvi"
+        cutoutConfigDrp.diff_image_type = "injected_goodSeeingDiff"
+    else:
+        cutoutConfigDrp.science_image_type = "calexp"
+        cutoutConfigDrp.diff_image_type = "goodSeeingDiff"
     cutoutConfigDrp.save_as_numpy = True
 
     cutoutTaskDrp = PlotImageSubtractionCutoutsTask(
@@ -78,6 +85,8 @@ def make_drp_cutouts(
                 .str.split("images/")
                 .apply(lambda x: x[1])
             )
+            raise ValueError("This needs to be revisited: the resulting dataId string can't be eval'd back to
+            a dict because the keys aren't strings")
             upload_df.loc[:, "dataId"] = str(ref.dataId)
             cutoutTaskDrp.run(dv_diaSourceTable, butler, njobs=njobs)
             upload_df.to_csv(upload_file)
