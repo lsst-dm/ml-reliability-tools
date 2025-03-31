@@ -1,0 +1,26 @@
+description: afterburner to run local rb classifier on DRP outputs
+
+parameters:
+  # Pipeline configurable to run on both goodSeeing and deep templates, depending on dataset.
+  coaddName: goodSeeing
+
+tasks:
+  rbClassify:
+    class: lsst.meas.transiNet.RBTransiNetTask
+    config:
+      modelPackageStorageMode: local
+      modelPackageName: tac_cnn_dc2_2024-11-14
+      connections.science: calexp
+      #connections.diaSources: {parameters.coaddName}Diff_diaSrc
+      connections.diaSources: goodSeeingDiff_diaSrc
+      connections.coaddName: parameters.coaddName
+  transformDiaSrcCat:
+    class: lsst.ap.association.TransformDiaSourceCatalogTask
+    config:
+            #doRemoveSkySources: True
+      connections.coaddName: parameters.coaddName
+      doIncludeReliability: True  # Output from rbClassify
+      connections.diaSourceSchema: goodSeeingDiff_diaSrc_schema
+      connections.diaSourceCat: goodSeeingDiff_diaSrc
+      connections.diffIm: goodSeeingDiff_differenceExp
+      connections.diaSourceTable: goodSeeingDiff_diaSrcTable
