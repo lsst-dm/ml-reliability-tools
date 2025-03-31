@@ -85,8 +85,8 @@ def make_drp_cutouts(
                 .str.split("images/")
                 .apply(lambda x: x[1])
             )
-            raise ValueError("This needs to be revisited: the resulting dataId string can't be eval'd back to
-            a dict because the keys aren't strings")
+#            raise ValueError("This needs to be revisited: the resulting dataId string can't be eval'd back to
+#            a dict because the keys aren't strings")
             upload_df.loc[:, "dataId"] = str(ref.dataId)
             cutoutTaskDrp.run(dv_diaSourceTable, butler, njobs=njobs)
             upload_df.to_csv(upload_file)
